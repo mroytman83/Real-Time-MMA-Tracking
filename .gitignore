@@ -1,0 +1,10 @@
+#project stuff
+kafka_2.13-4.0.0/
+.env
+vid_env/
+start_docker.sh
+
+
+#any python cache files
+__pycache__/
+*.py[cod]

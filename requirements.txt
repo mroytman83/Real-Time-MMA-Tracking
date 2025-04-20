@@ -1,0 +1,8 @@
+mss
+kafka-python
+inference-sdk
+ultralytics
+opencv-python
+Flask
+python-dotenv
+deep-sort-realtime
