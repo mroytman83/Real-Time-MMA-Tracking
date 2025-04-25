@@ -1,7 +1,8 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, Response
 from kafka import KafkaConsumer
 import threading, json
 from collections import defaultdict
+import sqlite3
 
 app = Flask(__name__)
 
@@ -36,7 +37,9 @@ def consume_kafka():
 
             # if kick/punch done count it as a strike TAKEN for the opponent
             action = predictions.get(fid, {}).get("action")
-            if action in ["punch", "kick"]:  #more labels in future?
+            if action in {"punch", "kick", "close_range_strike"}:  #more labels in future?
+                #blocking not scored so its discounted
+                #may use no action in the future as non-aggression, deducting points for the predicted fighter
                 strikes_taken[opponent][action] += 1
 
             # grappling
@@ -63,6 +66,27 @@ def data():
         },
         "control_time": control_time_counts
     })
+
+@app.route('/download_data')
+def download_data():
+        #time series data
+        conn = sqlite3.connect("data_utils/mma_predictions.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT timestamp, prediction_json FROM prediction_log ORDER BY id ASC")
+        rows = cursor.fetchall()
+        conn.close()
+
+        export = [
+            {"timestamp": ts, "predictions": json.loads(pred_json)}
+            for ts, pred_json in rows
+        ]
+
+        return Response(
+            json.dumps(export, indent=2),
+            mimetype="application/json",
+            headers={"Content-Disposition": "attachment;filename=predictions.json"}
+        )
+
 
 if __name__ == '__main__':
     app.run(debug=True)

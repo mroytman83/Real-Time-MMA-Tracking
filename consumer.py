@@ -12,11 +12,12 @@ import os
 import tempfile
 from dotenv import load_dotenv
 import time 
+from data_utils.connection import save_prediction
 
 load_dotenv()
 
 
-yolo_model = YOLO("model_weights/best.pt")
+yolo_model = YOLO("model_weights/action_weights.pt")
 
 
 grapple_model = InferenceHTTPClient(
@@ -100,7 +101,7 @@ for message in consumer:
             if track_id in track_id_to_fighter:
                 fighter_id = track_id_to_fighter[track_id]
 
-                if action_label!="no action" or action_label!="stand":
+                if action_label not in {"no action", "stand"}:
                     frame_data.setdefault(fighter_id, {})['action'] = action_label
 
         # match grappling position
@@ -128,6 +129,9 @@ for message in consumer:
         output={"time_stamp": time.strftime('%Y-%m-%d %H:%M:%S'),
                 'predictions': frame_data
                 }
+        
+        #send data to database
+        save_prediction(output)
         
         producer.send('ml-results', output)
 
