@@ -33,18 +33,22 @@ $ docker-compose up -d
 
 ---
 
-### 3. Start the Inference + Dashboard Pipeline
+### 3. Setting Up VENV 
 
 In the following order, run:
 
 ```bash
 $ python -m venv vid_env
 $ source vid_env/bin/activate
-$ pip install -r requirements.txt
-$ python consumer.py     
-$ python producer.py     
-$ python server.py      
+$ pip install -r requirements.txt   
 ```
+
+### 4. Running in Screen (still dev mode)
+```bash
+$ sudo/brew install screen
+$ bash bin/start.sh
+```
+Use Ctrl+A plus shortcuts like " to list windows, N/P to switch, K to kill a window, and screen -X -S mma_project quit to fully exit.
 
 ---
 
@@ -53,7 +57,7 @@ $ python server.py
 To clear data from topics (e.g., when restarting a demo), run:
 
 ```bash
-$ bash clear_topics.sh
+$ bash bin/clear_topics.sh
 ```
 ---
 

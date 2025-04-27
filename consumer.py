@@ -83,10 +83,40 @@ for message in consumer:
 
         tracked_objects = tracker.update_tracks(tracks, frame=frame)
 
+
+
+
         frame_data = {}  # Structure: {id: {'grappling': ..., 'action': ...}}
+
+
+        #DEBUGGING=====================================>
+
+
+        # BEFORE the loop
+        print("📦 Number of tracked objects:", len(tracked_objects))
+        print("🔢 Current fighter mapping:", track_id_to_fighter)
+        print("🧹 Frame data so far:", frame_data)
+
+        # Get all incoming track IDs from the tracker
+        current_track_ids = {t.track_id for t in tracked_objects}
+
+        # See if any active track_ids are not mapped to fighters
+        unmapped_ids = current_track_ids - set(track_id_to_fighter.keys())
+
+        if unmapped_ids:
+            print(f"🚨 Unmapped Track IDs Detected: {unmapped_ids}")
+            print(f"🔎 Current mapping: {track_id_to_fighter}")
+
+        #DEBUGGING=====================================>
+
+
 
         # YOLO tracking, and once matchededdedede, assign fighter IDs
         for track in tracked_objects:
+
+
+            print(f"👉 Track ID {track.track_id} - Confirmed: {track.is_confirmed()} - Detected class: {track.get_det_class()}")
+
             if not track.is_confirmed():
                 continue
             track_id = track.track_id
