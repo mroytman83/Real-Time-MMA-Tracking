@@ -1,4 +1,4 @@
-# 🥋 Real-Time MMA Prediction Dashboard
+# 🥋 Real-Time MMA Action Tracking Dashboard
 
 This project captures screen frames, performs real-time inference using YOLO, and visualizes fighter activity via a live web dashboard.
 
