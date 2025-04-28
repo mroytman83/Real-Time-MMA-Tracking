@@ -45,7 +45,7 @@ $ pip install -r requirements.txt
 
 ### 4. Running in Screen (still dev mode)
 ```bash
-$ sudo/brew install screen
+$ sudo apt /brew install screen
 $ bash bin/start.sh
 ```
 Use Ctrl+A plus shortcuts like " to list windows, N/P to switch, K to kill a window, and screen -X -S mma_project quit to fully exit.
