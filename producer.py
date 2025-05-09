@@ -32,6 +32,9 @@ while True:
 
     producer.send('screen-frames', {'image': jpg_as_text})
 
+    #implemented to keep 6 fps 
+    time.sleep(0.15)
+
     print("Sent frame to Kafka")
     frame_count += 1
     elapsed = time.time() - start_time

@@ -6,7 +6,7 @@ import json
 from ultralytics import YOLO
 from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 from deep_sort_realtime.deepsort_tracker import DeepSort
-from collections import defaultdict, Counter
+from collections import Counter
 import uuid
 import os
 import tempfile
@@ -16,22 +16,15 @@ from data_utils.connection import save_prediction
 
 load_dotenv()
 
-
 yolo_model = YOLO("model_weights/action_weights.pt")
-
 
 grapple_model = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
     api_key=os.getenv("ROBOFLOW"))
-
 custom_configuration = InferenceConfiguration(confidence_threshold=0.1)
 
-
 tracker = DeepSort(max_age=30)
-
-
 label_counts = Counter()
-
 
 producer = KafkaProducer(
     bootstrap_servers='localhost:9092',
@@ -43,12 +36,11 @@ consumer = KafkaConsumer(
     bootstrap_servers='localhost:9092',
     group_id=f"ml-consumer-{uuid.uuid4()}",
     value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-    auto_offset_reset='latest'
-)
+    auto_offset_reset='latest')
 
-# Deepsort track
 track_id_to_fighter = {}
-next_fighter_id = 1  # Will be 1 or 2
+track_id_ages = {}
+next_fighter_id = 1
 
 def infer_grappling_from_frame(frame):
     try:
@@ -61,7 +53,6 @@ def infer_grappling_from_frame(frame):
         print("Grappling inference error:", e)
         return []
 
-
 for message in consumer:
     try:
         img_b64 = message.value['image']
@@ -69,7 +60,6 @@ for message in consumer:
         np_img = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
-        # run YOLO
         results = yolo_model.predict(frame, conf=0.6, verbose=False)
         detections = results[0].boxes
 
@@ -79,72 +69,54 @@ for message in consumer:
             label = yolo_model.names[cls_id]
             xyxy = box.xyxy[0].cpu().numpy()
             x1, y1, x2, y2 = map(int, xyxy)
-            tracks.append(([x1, y1, x2 - x1, y2 - y1], 0.9, label))  # format: (xywh, conf, label)
+            tracks.append(([x1, y1, x2 - x1, y2 - y1], 0.9, label))
 
         tracked_objects = tracker.update_tracks(tracks, frame=frame)
+        frame_data = {}
 
-
-
-
-        frame_data = {}  # Structure: {id: {'grappling': ..., 'action': ...}}
-
-        #DEBUGGING=====================================>
-
-
-        # BEFORE the loop
-        print("📦 Number of tracked objects:", len(tracked_objects))
-        print("🔢 Current fighter mapping:", track_id_to_fighter)
-        print("🧹 Frame data so far:", frame_data)
-
-        # Get all incoming track IDs from the tracker
-        current_track_ids = {t.track_id for t in tracked_objects}
-
-        # See if any active track_ids are not mapped to fighters
-        unmapped_ids = current_track_ids - set(track_id_to_fighter.keys())
-
-        if unmapped_ids:
-            print(f"🚨 Unmapped Track IDs Detected: {unmapped_ids}")
-            print(f"🔎 Current mapping: {track_id_to_fighter}")
-
-        #DEBUGGING=====================================>
-
-        # YOLO tracking, and once matchededdedede, assign fighter IDs
+        visible_ids = {t.track_id for t in tracked_objects}
         for track in tracked_objects:
+            track_id_ages[track.track_id] = track_id_ages.get(track.track_id, 0) + 1
 
+        missing_fighters = set(track_id_to_fighter.keys()) - visible_ids
+        if missing_fighters:
+            print("⚡ Remapping fighters due to missing IDs!")
+            sorted_tracks = sorted(track_id_ages.items(), key=lambda x: -x[1])
+            top_two_tracks = [str(tid) for tid, _ in sorted_tracks if tid in visible_ids][:2]
+            track_id_to_fighter = {}
+            next_fighter_id = 1
+            for tid in top_two_tracks:
+                track_id_to_fighter[int(tid)] = str(next_fighter_id)
+                next_fighter_id += 1
 
-            print(f"👉 Track ID {track.track_id} - Confirmed: {track.is_confirmed()} - Detected class: {track.get_det_class()}")
-
+        for track in tracked_objects:
             if not track.is_confirmed():
                 continue
+
             track_id = track.track_id
-            action_label = track.get_det_class()  # from YOLO
-            
-            # Assign track ID to fighter 1 or 2
+            action_label = track.get_det_class()
+
             if track_id not in track_id_to_fighter and next_fighter_id <= 2:
                 track_id_to_fighter[track_id] = str(next_fighter_id)
                 next_fighter_id += 1
 
-            #considering mapped ids
             if track_id in track_id_to_fighter:
                 fighter_id = track_id_to_fighter[track_id]
-
                 if action_label not in {"no action", "stand"}:
                     frame_data.setdefault(fighter_id, {})['action'] = action_label
 
-        # match grappling position
         grappling_preds = infer_grappling_from_frame(frame)
         for g in grappling_preds:
             g_label = g['class']
             if g_label[-1] in ('1', '2'):
                 try:
-                    id_num = g_label[-1]  # 1 or 2
-                    grappling_name = g_label[:-1]  # Remove the 1 or 2
-                    if grappling_name=="back" or grappling_name=="mount" or grappling_name=="takedown" or grappling_name=="side_control":
+                    id_num = g_label[-1]
+                    grappling_name = g_label[:-1]
+                    if grappling_name in {"back", "mount", "takedown", "side_control"}:
                         frame_data.setdefault(id_num, {})['grappling'] = "control time"
                 except:
                     continue
 
-        # Update counts and print per person
         for pid, labels in frame_data.items():
             action = labels.get('action')
             grappling = labels.get('grappling')
@@ -153,17 +125,17 @@ for message in consumer:
 
         print("Frame labels:", frame_data)
 
-        output={"time_stamp": time.strftime('%Y-%m-%d %H:%M:%S'),
-                'predictions': frame_data
-                }
-        
-        #send data to database
+        output = {
+            "time_stamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+            'predictions': frame_data
+        }
+
         save_prediction(output)
-        
         producer.send('ml-results', output)
 
     except Exception as e:
         print("Frame processing error:", e)
+
 
 
 
