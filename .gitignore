@@ -8,3 +8,6 @@ start_docker.sh
 #any python cache files
 __pycache__/
 *.py[cod]
+
+#extra
+.DS_Store
