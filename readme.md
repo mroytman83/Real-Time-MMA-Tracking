@@ -14,19 +14,19 @@ Martial Arts bouts"](https://arxiv.org/pdf/2312.11067), which demonstrates how a
 
 This system is built to perform real-time video analytics on MMA fights with minimal latency, while being modular enough for deployment and future extension. The core components include:
 
-Python + YOLOv8 (Ultralytics)
+#### Python + YOLOv8 (Ultralytics)
 YOLOv8 serves as the primary object detection model, identifying key fighter actions (e.g., punch, kick, block) frame by frame. Inference runs locally for speed, using ultralytics' efficient APIs.
 
-Roboflow Inference SDK
+#### Roboflow Inference SDK
 Used for specialized grappling position detection via a second model hosted on Roboflow. This allows decoupling of lightweight local detection (strikes) and cloud-based inference (grappling), improving maintainability. This is currently in place because I've had issues training a grappling model with good accuracy. As the project develops, this is set for huge improvement🚀
 
-Apache Kafka
+#### Apache Kafka
 Kafka handles high-throughput streaming of video frames from a producer (screen capture) to a consumer (inference pipeline). Messages are serialized as JSON, allowing flexible integration of future metadata (e.g. frame quality, FPS, etc.).
 
-DeepSORT
+#### DeepSORT
 An online multi-object tracking algorithm that links detection boxes across frames and assigns consistent IDs to fighters. Combined with fighter ID mapping logic, this ensures stable tracking even in fast-moving, occluded scenes.
 
-Flask + D3.js
+#### Flask + D3.js
 A lightweight Flask backend serves a dashboard API and static frontend, where D3.js renders real-time charts showing actions, control time, and strike breakdowns per fighter. This combination enables both data capture and interpretation in a unified UI.
 
  Docker (Apache + Confluent Kafka images)
