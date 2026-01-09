@@ -10,7 +10,7 @@ Another paper that inspired me was ["FightTracker: Real-time predictive analytic
 Martial Arts bouts"](https://arxiv.org/pdf/2312.11067), which demonstrates how access to in-round, time-series data can significantly improve the transparency and predictive accuracy of MMA judging. The real-time system's video-first, per-frame approach enhances fidelity and opens the door to automated judging systems that are less subjective, more explainable, and more consistent. With every grappling exchange, strike type, and positional control logged in real-time, judges (or algorithms) can be supported by empirical timelines of fighter dominance. Implementing such a system at a larger scale can boost fan engagement by demystifying scorecards and reducing controversy around decisions—making MMA more analytically sound and competitively fair.
 
 
-## 🔧 Tech Stack
+##  Tech Stack
 
 This system is built to perform real-time video analytics on MMA fights with minimal latency, while being modular enough for deployment and future extension. The core components include:
 
@@ -75,7 +75,7 @@ Use Ctrl+A plus shortcuts like " to list windows, N/P to switch, K to kill a win
 
 ---
 
-## 🔄 Resetting Kafka Topics
+##  Resetting Kafka Topics
 
 To clear data from topics (e.g., when restarting a demo), run:
 
@@ -84,7 +84,7 @@ $ bash bin/clear_topics.sh
 ```
 ---
 
-## 📊 Dashboard Features
+##  Dashboard Features
 
 - Real-time bar graph of **control time** per fighter
 - Dynamic display of **strikes absorbed** (punches, kicks)
