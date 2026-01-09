@@ -3,25 +3,25 @@
 BROKER=localhost:9092
 TOPICS=("screen-frames" "ml-results")
 
-echo "⚠️  Clearing topics: ${TOPICS[*]}"
+echo " clearing: ${TOPICS[*]}"
 
 for TOPIC in "${TOPICS[@]}"
 do
-    echo "👉 Clearing topic: $TOPIC"
+    echo "set for deletion: $TOPIC"
 
-    # Set retention.ms to 0 to delete messages immediately
+    #exec and set retention
     docker exec kafka kafka-configs --bootstrap-server $BROKER --alter \
       --entity-type topics --entity-name $TOPIC \
       --add-config retention.ms=0
 
     sleep 2
 
-    # Restore default retention
+   
     docker exec kafka kafka-configs --bootstrap-server $BROKER --alter \
       --entity-type topics --entity-name $TOPIC \
       --delete-config retention.ms
 
-    echo "✅ Cleared $TOPIC"
+    echo "Cleared out $TOPIC"
 done
 
-echo "🎉 All topics cleared."
+echo "All topics cleared"
