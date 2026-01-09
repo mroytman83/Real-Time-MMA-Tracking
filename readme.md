@@ -18,7 +18,7 @@ This system is built to perform real-time video analytics on MMA fights with min
 YOLOv8 serves as the primary object detection model, identifying key fighter actions (e.g., punch, kick, block) frame by frame. Inference runs locally for speed, using ultralytics' efficient APIs.
 
 #### Roboflow Inference SDK
-Used for specialized grappling position detection via a second model hosted on Roboflow. This allows decoupling of lightweight local detection (strikes) and cloud-based inference (grappling), improving maintainability. This is currently in place because I've had issues training a grappling model with good accuracy. As the project develops, this is set for huge improvement🚀
+Used for specialized grappling position detection via a second model hosted on Roboflow. This allows decoupling of lightweight local detection (strikes) and cloud-based inference (grappling), improving maintainability. This is currently in place because I've had issues training a grappling model with good accuracy. As the project develops, this is set for huge improvement
 
 #### Apache Kafka
 Kafka handles high-throughput streaming of video frames from a producer (screen capture) to a consumer (inference pipeline). Messages are serialized as JSON, allowing flexible integration of future metadata (e.g. frame quality, FPS, etc.).
